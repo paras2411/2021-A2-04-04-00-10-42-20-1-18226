@@ -4,8 +4,6 @@ import numpy as np
 import ast
 import sys
 import pandas as pd
-from matplotlib import pyplot as plt
-%matplotlib inline
 import tensorflow as tf
 from tensorflow import keras
 
@@ -51,10 +49,11 @@ class Vocabulary:
         return self.word2index[word]
 
 
+input_filename = sys.argv[1]
+output_filename = sys.argv[2]
 df = pd.read_csv("/content/drive/MyDrive/Colab Notebooks/ASEML/demo/train.csv")
 
-val_df = 'drive/MyDrive/Colab Notebooks/ASEML/demo/'+ sys.argv[1]
-test_df = 'drive/MyDrive/' + sys.argv[2]
+val_df = pd.read_csv('/content/drive/MyDrive/Colab Notebooks/ASEML/demo/'+ input_filename)
 
 ### Create vocabulary
 
@@ -85,7 +84,7 @@ for key in valid_dict.keys():
 
 # Define sampling models
 # Restore the model and construct the encoder and decoder.
-model = keras.models.load_model("/content/drive/MyDrive/Colab Notebooks/ASEML/s2s")
+model = keras.models.load_model("/content/drive/MyDrive/Colab Notebooks/ASEML/demo/s2s")
 
 encoder_inputs = model.input[0]  # input_1
 encoder_outputs, state_h_enc, state_c_enc = model.layers[2].output  # lstm_1
@@ -107,9 +106,6 @@ decoder_model = keras.Model(
     [decoder_inputs] + decoder_states_inputs, [decoder_outputs] + decoder_states
 )
 
-
-val_df = pd.read_csv("/content/drive/MyDrive/Colab Notebooks/ASEML/valid.csv")
-val_df.head()
 
 
 def correct_code(input_token):
@@ -138,7 +134,6 @@ def correct_code(input_token):
             break
 
     return correct_code_list
-
 
 
 df = val_df
@@ -177,7 +172,7 @@ for i, (input_token) in enumerate(input_tokens):
 corrected_code = []
 
 ip = len(val_df)
-print(ip)
+
 
 for i in range(len(val_df)):
     sourceLineToken = ast.literal_eval(val_df['sourceLineTokens'][i])
@@ -197,4 +192,10 @@ for i in range(len(val_df)):
             ip -= 1
             break
 
-print(ip)
+
+### Ip will contain the number of correctly matched tokens
+
+print("Accuracy: ", ip/len(val_df))
+
+val_df['fixedTokens'] = corrected_code
+val_df.to_csv('/content/drive/MyDrive/Colab Notebooks/ASEML/demo/' + output_filename)
